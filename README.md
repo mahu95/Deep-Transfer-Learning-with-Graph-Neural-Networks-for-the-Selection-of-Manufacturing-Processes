@@ -45,12 +45,14 @@ Crucially, the **PMI feeds back into the labels**: a tight tolerance or fine sur
 
 ### The graph (`Graph/N.json`)
 
-Each part is encoded as two graph structures over the **same set of face nodes**:
+Each part is encoded as three graphs. Two of them share the **same set of face nodes**, where every face of the part is one node:
 
-* **AAG (Attributed Adjacency Graph)** — faces are nodes, shared B-rep edges are graph edges. Nodes carry geometric face attributes (surface type, centroid, normal, area, …) and edges carry geometric attributes plus **edge convexity** (convex / concave / smooth).
-* **PMI graph** — the same face nodes connected by PMI relationships (datum ↔ reference links), with PMI node and edge attributes.
+* **AAG (Attributed Adjacency Graph)**, faces are nodes, shared B-rep edges are graph edges. Nodes carry geometric face attributes (surface type, centroid, normal, area, …) and edges carry geometric attributes plus **edge convexity** (convex, concave, smooth).
+* **PMI graph**, the same face nodes connected by PMI relationships (datum and reference links), with PMI node and edge attributes.
 
-A light **surface mesh** is also stored per face. The JSON keys are:
+* **Mesh graph**, a graph in exactly the same sense as the other two, but on a **different hierarchy level**. Instead of one graph for the whole part, there is one mesh graph **per face**, whose nodes are the triangulation vertices (with coordinates and normals) and whose edges are the triangle edges. Because there are many such per-face graphs for a single part, they are **batched** into one disjoint graph (the `Mesh Batch Information` records which face each node belongs to), the same way mini-batches of graphs are handled in PyTorch Geometric.
+
+The JSON keys are:
 
 ```
 Geom Face Attributes      Geom Edge Attributes      Geom Face Adj. Matrix
@@ -72,7 +74,7 @@ The per-face segmentation target (`Label/N.xlsx`), defined in `utils/Label.py`:
 | 3 | Drilling | | 8 | Milling & Grinding |
 | 4 | Finish Turning | | 9 | Drilling & Grinding |
 
-> **Note — label granularity.** The labels produced here are **finer-grained** than in the associated published paper. In the paper the *rough* and *fine* variants of a process are merged into a single class for prediction, whereas here they are kept as distinct, more fine-grained process classes (e.g. *Rough Turning* vs *Finish Turning*, *Rough Milling* vs *Finish Milling*). This follows the recommendations in the references — for example [[48]](#references) — which distinguish processes at this finer level based on the GD&T and surface-finish requirements.
+> **Note, label granularity.** The labels produced here are **finer-grained** than in the associated published paper. In the paper the *rough* and *fine* variants of a process are merged into a single class for prediction, whereas here they are kept as distinct, more fine-grained process classes (e.g. *Rough Turning* vs *Finish Turning*, *Rough Milling* vs *Finish Milling*). This follows the recommendations in the references, for example [[48]](#references), which distinguish processes at this finer level based on the GD&T and surface-finish requirements.
 
 ---
 
@@ -182,10 +184,10 @@ Currently available as a preprint on SSRN:
 
 ## Attribution
 
-The B-rep topology validation in [`utils/topologyCheker.py`](utils/topologyCheker.py) is taken (essentially verbatim, filename typo included) from the **AAGNet** project, which itself adapted it from **BRepNet**:
+The B-rep topology validation in [`utils/topologyCheker.py`](utils/topologyCheker.py) is taken from the **AAGNet** project, which itself adapted it from **BRepNet**:
 
-* AAGNet — <https://github.com/whjdark/AAGNet> (`dataset/topologyCheker.py`)
-* BRepNet — <https://github.com/AutodeskAILab/BRepNet> (`pipeline/extract_brepnet_data_from_step.py`)
+* AAGNet, <https://github.com/whjdark/AAGNet> (`dataset/topologyCheker.py`)
+* BRepNet, <https://github.com/AutodeskAILab/BRepNet> (`pipeline/extract_brepnet_data_from_step.py`)
 
 The attributed-adjacency-graph representation and the dataset consistency-checking approach in `crosscheck.py` follow the same line of work.
 
@@ -195,7 +197,7 @@ The attributed-adjacency-graph representation and the dataset consistency-checki
 
 ## References
 
-The rules used to relate PMI (tolerances, surface finish, GD&T) to manufacturing processes — implemented in [`utils/PMI.py`](utils/PMI.py) — were derived from the following sources together with interviews with experts from the field:
+The rules used to relate PMI (tolerances, surface finish, GD&T) to manufacturing processes, implemented in [`utils/PMI.py`](utils/PMI.py), were derived from the following sources together with interviews with experts from the field:
 
 - **[47]** Swift KG, Booker JD. *Manufacturing Process Selection Handbook*. Elsevier; 2013.
 - **[48]** Sormaz D, Gouveia R, Sarkar A. *Rule Based Process Selection of Milling Processes Based on GD&T Requirements*. Journal of Production Engineering 2018;21(2):19–26. <https://doi.org/10.24867/JPE-2018-02-019>.
@@ -207,4 +209,4 @@ The rules used to relate PMI (tolerances, surface finish, GD&T) to manufacturing
 
 ## License
 
-Released under the **Apache License 2.0** — see [LICENSE](LICENSE).
+Released under the **Apache License 2.0**, see [LICENSE](LICENSE).
